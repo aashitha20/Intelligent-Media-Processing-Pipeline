@@ -70,9 +70,15 @@ export function extractIndianNumberPlate(ocrText: string): PlateExtraction {
     }
   }
 
-  // Prefer the longest alphanumeric-looking token as a best-effort plate
+  // Fallback only for plate-shaped candidates (state code + digits…), not OCR noise.
+  const isPlateShaped = (c: string): boolean =>
+    (c.length >= 8 &&
+      c.length <= 11 &&
+      /^[A-Z]{2}[0-9]{1,2}[A-Z0-9]+$/.test(c)) ||
+    (c.length >= 8 && c.length <= 11 && /^[0-9]{2}BH[0-9A-Z]+$/.test(c));
+
   const fallback = [...candidates]
-    .filter((c) => c.length >= 6 && c.length <= 12)
+    .filter(isPlateShaped)
     .sort((a, b) => b.length - a.length)[0];
 
   if (fallback) {
