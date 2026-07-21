@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from 'express';
-import multer, { MulterError } from 'multer';
+import { MulterError } from 'multer';
 import { ZodError } from 'zod';
 import { logger } from '../lib/logger.js';
 
@@ -60,14 +60,6 @@ export function errorHandler(
     return;
   }
 
-  if (err instanceof Error && 'code' in err && (err as { code?: string }).code === 'LIMIT_FILE_SIZE') {
-    res.status(400).json({ error: 'File too large (max 10MB)' });
-    return;
-  }
-
   logger.error({ err }, 'Unhandled error');
   res.status(500).json({ error: 'Internal server error' });
 }
-
-// Keep multer import referenced for typings in some TS module settings
-void multer;
