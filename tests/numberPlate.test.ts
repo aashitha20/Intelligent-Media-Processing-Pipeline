@@ -28,6 +28,20 @@ describe('Indian number plate validation', () => {
   it('normalizes candidates', () => {
     expect(normalizePlateCandidate('mh-12-ab-1234')).toBe('MH12AB1234');
   });
+
+  it('does not treat letter-only OCR noise as an invalid plate', () => {
+    const result = extractIndianNumberPlate('HE WOO SHE VATH random letters only');
+    expect(result.normalized).toBeNull();
+    expect(result.valid).toBe(false);
+    expect(result.issues.some((i) => i.code === 'NUMBER_PLATE_NOT_FOUND')).toBe(true);
+  });
+
+  it('flags plate-shaped but invalid alphanumeric strings', () => {
+    const result = extractIndianNumberPlate('Vehicle MH99ZZZ99 extra');
+    expect(result.normalized).toBe('MH99ZZZ99');
+    expect(result.valid).toBe(false);
+    expect(result.issues.some((i) => i.code === 'INVALID_NUMBER_PLATE')).toBe(true);
+  });
 });
 
 describe('perceptual hash distance', () => {
