@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { createImageAndEnqueue } from '../services/imageService.js';
-import { uploadMiddleware } from '../middleware/upload.js';
+import { assertValidImageFile, uploadMiddleware } from '../middleware/upload.js';
 import { AppError } from '../middleware/errorHandler.js';
 
 export const uploadRouter = Router();
@@ -34,10 +34,12 @@ uploadRouter.post('/', uploadMiddleware.single('image'), async (req, res, next) 
       throw new AppError(400, 'Image file is required (field name: image)');
     }
 
+    const validated = await assertValidImageFile(req.file);
+
     const result = await createImageAndEnqueue({
       filename: req.file.originalname,
-      filepath: req.file.path,
-      mimeType: req.file.mimetype,
+      filepath: validated.filepath,
+      mimeType: validated.mimeType,
       sizeBytes: req.file.size,
     });
 
