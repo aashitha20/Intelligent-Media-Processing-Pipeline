@@ -1,0 +1,9 @@
+.env
+node_modules
+uploads
+dist
+dump.rdb
+eng.traineddata
+*.log
+coverage
+.git

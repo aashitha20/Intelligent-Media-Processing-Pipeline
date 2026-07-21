@@ -3,34 +3,21 @@ import { env } from './config/env.js';
 import { logger } from './lib/logger.js';
 import { IMAGE_ANALYSIS_QUEUE, type ImageAnalysisJobData } from './lib/queue.js';
 import { createRedisConnection } from './lib/redis.js';
-import { runAnalysisPipeline } from './modules/index.js';
-import {
-  markProcessing,
-  saveAnalysisFailure,
-  saveAnalysisSuccess,
-} from './services/imageService.js';
-
-async function processJob(data: ImageAnalysisJobData): Promise<void> {
-  const { imageId, filepath } = data;
-  await markProcessing(imageId);
-
-  try {
-    const result = await runAnalysisPipeline(imageId, filepath);
-    await saveAnalysisSuccess(imageId, result);
-  } catch (err) {
-    const reason = err instanceof Error ? err.message : 'Unknown processing error';
-    logger.error({ err, imageId }, 'Analysis job failed');
-    await saveAnalysisFailure(imageId, reason);
-    throw err;
-  }
-}
+import { processImageAnalysis } from './services/processingService.js';
 
 async function main() {
+  if (env.PROCESSING_MODE === 'inline') {
+    logger.warn(
+      'PROCESSING_MODE=inline — BullMQ worker is not needed. Exiting worker process.',
+    );
+    process.exit(0);
+  }
+
   const worker = new Worker<ImageAnalysisJobData>(
     IMAGE_ANALYSIS_QUEUE,
     async (job) => {
       logger.info({ jobId: job.id, imageId: job.data.imageId }, 'Processing analysis job');
-      await processJob(job.data);
+      await processImageAnalysis(job.data.imageId, job.data.filepath);
     },
     {
       connection: createRedisConnection(),

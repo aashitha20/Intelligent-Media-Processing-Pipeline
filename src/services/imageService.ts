@@ -1,6 +1,6 @@
 import { ImageStatus, type Prisma } from '@prisma/client';
+import { env } from '../config/env.js';
 import { prisma } from '../lib/prisma.js';
-import { getAnalysisQueue } from '../lib/queue.js';
 import { AppError } from '../middleware/errorHandler.js';
 import type { AggregatedAnalysis } from '../types/analysis.js';
 
@@ -20,6 +20,25 @@ export async function createImageAndEnqueue(input: {
     },
   });
 
+  // Vercel serverless cannot run a long-lived BullMQ worker.
+  // Inline mode processes the image inside the same function invocation.
+  // Prefer live process.env so PLATFORM/test overrides work after module load.
+  const processingMode =
+    process.env.PROCESSING_MODE === 'inline' || process.env.PROCESSING_MODE === 'queue'
+      ? process.env.PROCESSING_MODE
+      : env.PROCESSING_MODE;
+
+  if (processingMode === 'inline') {
+    const { processImageAnalysis } = await import('./processingService.js');
+    await processImageAnalysis(image.id, image.filepath);
+    const refreshed = await prisma.image.findUnique({
+      where: { id: image.id },
+      select: { id: true, status: true },
+    });
+    return { id: image.id, status: refreshed?.status ?? ImageStatus.COMPLETED };
+  }
+
+  const { getAnalysisQueue } = await import('../lib/queue.js');
   await getAnalysisQueue().add(
     'analyze',
     { imageId: image.id, filepath: image.filepath },

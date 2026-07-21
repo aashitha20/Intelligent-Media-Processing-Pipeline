@@ -14,7 +14,12 @@ import { uploadRouter } from './routes/upload.js';
 export function createApp() {
   const app = express();
 
-  app.use(helmet());
+  app.use(
+    helmet({
+      // Swagger UI loads inline scripts/styles; relax CSP only for docs UX.
+      contentSecurityPolicy: false,
+    }),
+  );
   app.use(cors());
   app.use(express.json({ limit: '1mb' }));
   app.use(
