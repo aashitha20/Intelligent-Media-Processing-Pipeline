@@ -1,6 +1,10 @@
-# Intelligent Media Processing Pipeline
+# Intelligent Media Processing Pipeline - Backend + AI Engineering Take-Home Assignment
 
 Asynchronous backend that accepts vehicle image uploads, runs quality/authenticity analysis in the background, and exposes APIs for status and structured results.
+
+## Hosted on : [Intelligent Media Processing Pipeline](https://intelligent-media-processing-pipeline-production-aa93.up.railway.app/docs/)
+
+---
 
 ## Stack review (MVP)
 
