@@ -1,10 +1,3 @@
-# Intelligent Media Processing Pipeline
-
-## Objective
-
-Build a scalable asynchronous backend system that accepts uploaded vehicle images, processes them in the background, detects potential quality or authenticity issues, and exposes APIs for monitoring processing status and retrieving structured analysis results.
-
----
 
 # Tech Stack
 
