@@ -1,4 +1,5 @@
 import type { NextFunction, Request, Response } from 'express';
+import { MulterError } from 'multer';
 import { ZodError } from 'zod';
 import { logger } from '../lib/logger.js';
 
@@ -39,13 +40,23 @@ export function errorHandler(
     return;
   }
 
-  if (err instanceof Error && err.message.includes('Only JPEG')) {
+  if (err instanceof MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      res.status(400).json({ error: 'File too large (max 10MB)' });
+      return;
+    }
+    if (err.code === 'LIMIT_UNEXPECTED_FILE') {
+      res.status(400).json({
+        error: `Unexpected file field "${err.field}". Use field name "image".`,
+      });
+      return;
+    }
     res.status(400).json({ error: err.message });
     return;
   }
 
-  if (err instanceof Error && 'code' in err && (err as { code?: string }).code === 'LIMIT_FILE_SIZE') {
-    res.status(400).json({ error: 'File too large (max 10MB)' });
+  if (err instanceof Error && err.message.includes('Only JPEG')) {
+    res.status(400).json({ error: err.message });
     return;
   }
 
